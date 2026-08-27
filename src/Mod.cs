@@ -52,6 +52,12 @@ public class Mod : IMod
         updateSystem.UpdateBefore<Systems.SignalOverrideSystem, Game.Simulation.TrafficLightSystem>(
             SystemUpdatePhase.GameSimulation);
 
+        // 方案系统只负责把后台算好的结果搬到主线程应用，放在模拟末尾即可
+        updateSystem.UpdateAt<Systems.AdvisorSystem>(SystemUpdatePhase.GameSimulation);
+
+        // 扫描系统是纯服务型，创建出来供其他系统调用，自身不参与每帧更新
+        world.GetOrCreateSystemManaged<Systems.IntersectionScanSystem>();
+
         log.Info($"========== Urban Brain 加载完成（接管能力：{(takeoverAvailable ? "可用" : "不可用")}）==========");
     }
 
