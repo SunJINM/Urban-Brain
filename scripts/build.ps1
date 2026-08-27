@@ -1,5 +1,13 @@
 # Urban Brain 一键构建
-# 用法：右键 -> 使用 PowerShell 运行，或在终端里执行  .\scripts\build.ps1
+#
+# 用法：
+#   .\scripts\build.ps1           只编译 C#（推荐先用这个）
+#   .\scripts\build.ps1 -WithUI   同时构建 React 前端
+#
+# 建议先只编译 C#。C# 侧还没在真实游戏里验证过，
+# 加上 UI 构建会多一层可能失败的地方，出错时不好判断问题出在哪一侧。
+
+param([switch]$WithUI)
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -33,14 +41,26 @@ Write-Host "[i] 编译产物会自动进入：$modsPath"
 # --- 构建 ---
 Write-Host ""
 Write-Host "开始编译..." -ForegroundColor Cyan
-dotnet build $proj -c Release
+
+if ($WithUI) {
+    Write-Host "（同时构建 UI 前端，需要 Node.js 18+）" -ForegroundColor Cyan
+    dotnet build $proj -c Release -p:BuildUI=true
+} else {
+    dotnet build $proj -c Release
+}
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
     Write-Host "[X] 编译失败。" -ForegroundColor Red
     Write-Host "    把上面所有红色的报错完整复制发回即可，不用自己判断哪条重要。" -ForegroundColor Yellow
+    if ($WithUI) {
+        Write-Host "    如果报错来自 npm / webpack，可以先去掉 -WithUI 只编译 C#。" -ForegroundColor Yellow
+    }
     exit 1
 }
 
 Write-Host ""
 Write-Host "[OK] 编译成功。启动游戏，在 Options 里找 Urban Brain。" -ForegroundColor Green
+if (-not $WithUI) {
+    Write-Host "[i] 本次没有构建 UI 面板，所有功能都可以在设置页操作。" -ForegroundColor Gray
+}

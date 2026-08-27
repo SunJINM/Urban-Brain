@@ -37,4 +37,20 @@
         <Reference Include="UnityEngine.CoreModule"><Private>false</Private></Reference>
     </ItemGroup>
 
+    <!--
+        UI 前端构建默认关闭。
+
+        C# 侧还没在真实游戏里验证过，npm 构建一旦失败会让整个编译失败，
+        连带 C# 的验证也做不成。等 C# 跑通了再打开：
+
+            .\scripts\build.ps1 -WithUI
+
+        或者直接 dotnet build src\UrbanBrain.csproj -c Release -p:BuildUI=true
+    -->
+    <Target Name="BuildUrbanBrainUI" BeforeTargets="Build" Condition="'$(BuildUI)' == 'true'">
+        <Exec Command="npm install --prefer-offline --no-audit" WorkingDirectory="..\ui\" />
+        <Exec Command="npm run build" WorkingDirectory="..\ui\" />
+        <Copy SourceFiles="..\ui\dist\UrbanBrain.mjs" DestinationFolder="$(OutDir)\" />
+    </Target>
+
 </Project>

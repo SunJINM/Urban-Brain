@@ -58,6 +58,9 @@ public class Mod : IMod
         // 扫描系统是纯服务型，创建出来供其他系统调用，自身不参与每帧更新
         world.GetOrCreateSystemManaged<Systems.IntersectionScanSystem>();
 
+        // 游戏内面板的数据通道。前端 .mjs 没构建时它也无害，只是没人来取数据。
+        updateSystem.UpdateAt<Systems.UISystem>(SystemUpdatePhase.UIUpdate);
+
         log.Info($"========== Urban Brain 加载完成（接管能力：{(takeoverAvailable ? "可用" : "不可用")}）==========");
     }
 
