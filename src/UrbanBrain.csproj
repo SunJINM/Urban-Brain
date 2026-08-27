@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <TargetFramework>net48</TargetFramework>
+        <Configurations>Debug;Release</Configurations>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>12.0</LangVersion>
+
+        <AssemblyName>UrbanBrain</AssemblyName>
+        <RootNamespace>UrbanBrain</RootNamespace>
+        <Version>0.1.0</Version>
+
+        <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
+    </PropertyGroup>
+
+    <!-- Import 必须放在 PropertyGroup 之后。这两个文件由游戏的 Modding Toolchain 生成，
+         位置由用户环境变量 CSII_TOOLPATH 指定。 -->
+    <Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
+    <Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" Condition="'$(DisablePostProcessors)' != 'true'" />
+
+    <ItemGroup>
+        <Reference Include="Game"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Core"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Collections"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Logging"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Mathematics"><Private>false</Private></Reference>
+        <Reference Include="Colossal.IO.AssetDatabase"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Localization"><Private>false</Private></Reference>
+        <Reference Include="Colossal.UI"><Private>false</Private></Reference>
+        <Reference Include="Colossal.UI.Binding"><Private>false</Private></Reference>
+        <Reference Include="Newtonsoft.Json"><Private>false</Private></Reference>
+        <Reference Include="Unity.Entities"><Private>false</Private></Reference>
+        <Reference Include="Unity.Collections"><Private>false</Private></Reference>
+        <Reference Include="Unity.Mathematics"><Private>false</Private></Reference>
+        <Reference Include="Unity.Burst"><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.CoreModule"><Private>false</Private></Reference>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+<Publish>
+    <DisplayName Value="Urban Brain" />
+    <ShortDescription Value="AI 驱动的路口信号与转向规则控制（个人自用，不发布）" />
+    <LongDescription>个人自用，不发布到 Paradox Mods。</LongDescription>
+    <Thumbnail Value="Properties/Thumbnail.png" />
+    <Tag Value="Code Mod" />
+    <ModVersion Value="0.1.0" />
+    <GameVersion Value="1.3.*" />
+</Publish>
