@@ -1,35 +1,45 @@
-using Colossal.IO.AssetDatabase;
 using Colossal.Logging;
 using Game;
 using Game.Modding;
 using Game.SceneFlow;
-using Unity.Collections;
-using Unity.Entities;
 
 namespace UrbanBrain;
 
+/// <summary>
+/// Urban Brain 模组入口。
+///
+/// 本体不实现任何交通逻辑，只负责按正确顺序把两个功能模块拉起来：
+///
+///   Traffic.Mod                         车道连接、路口优先级标志
+///   C2VM.TrafficLightsEnhancement.Mod   信号相位与配时
+///
+/// 这两个模块分别源自 Traffic 与 Traffic Lights Enhancement，
+/// 并入时都去掉了各自的 IMod 实现 —— 一个程序集只能有一个模组入口。
+///
+/// 它们接管的是不同的游戏系统，互不冲突：
+///   Traffic 禁用并替换 Game.Net.LaneSystem
+///   TLE     改写 Game.Simulation.TrafficLightSystem 的查询条件
+/// </summary>
 public class Mod : IMod
 {
+    /// <summary>
+    /// 模组版本。被两个子模块的设置页引用，改动时注意它们的显示。
+    /// </summary>
+    public const string kVersion = "0.2.0";
+
     public static readonly string kId = typeof(Mod).Assembly.GetName().Name;
 
     public static ILog log = LogManager.GetLogger(kId).SetShowsErrorsInUI(false);
 
-    public static Setting setting;
-
     public static World world;
 
-    /// <summary>
-    /// 反射改写原版查询是否成功。失败时接管按钮会被禁用 ——
-    /// 因为此时我们和原版会同时写同一个组件，结果不可预测，宁可不接管。
-    /// </summary>
-    public static bool takeoverAvailable;
+    private Traffic.Mod m_LaneModule;
 
-    /// <summary>原版信号 System 里持有路口查询的私有字段名（来自反编译，游戏更新可能改动）。</summary>
-    private const string kVanillaQueryField = "m_TrafficLightQuery";
+    private C2VM.TrafficLightsEnhancement.Mod m_SignalModule;
 
     public void OnLoad(UpdateSystem updateSystem)
     {
-        log.Info("========== Urban Brain 开始加载 ==========");
+        log.Info($"========== Urban Brain v{kVersion} 开始加载 ==========");
 
         if (GameManager.instance.modManager.TryGetExecutableAsset(this, out var asset))
         {
@@ -38,73 +48,39 @@ public class Mod : IMod
 
         world = updateSystem.World;
 
-        setting = new Setting(this);
-        setting.RegisterInOptionsUI();
-        AssetDatabase.global.LoadSettings(kId, setting, new Setting(this));
-
-        var locale = new Locale(setting);
-        GameManager.instance.localizationManager.AddSource("zh-HANS", locale);
-        GameManager.instance.localizationManager.AddSource("en-US", locale);
-
-        TryDetachVanillaSystem();
-
-        // 我们的接管逻辑必须跑在原版之前
-        updateSystem.UpdateBefore<Systems.SignalOverrideSystem, Game.Simulation.TrafficLightSystem>(
-            SystemUpdatePhase.GameSimulation);
-
-        // 方案系统只负责把后台算好的结果搬到主线程应用，放在模拟末尾即可
-        updateSystem.UpdateAt<Systems.AdvisorSystem>(SystemUpdatePhase.GameSimulation);
-
-        // 扫描系统是纯服务型，创建出来供其他系统调用，自身不参与每帧更新
-        world.GetOrCreateSystemManaged<Systems.IntersectionScanSystem>();
-
-        // 游戏内面板的数据通道。前端 .mjs 没构建时它也无害，只是没人来取数据。
-        updateSystem.UpdateAt<Systems.UISystem>(SystemUpdatePhase.UIUpdate);
-
-        log.Info($"========== Urban Brain 加载完成（接管能力：{(takeoverAvailable ? "可用" : "不可用")}）==========");
-    }
-
-    /// <summary>
-    /// 把原版 TrafficLightSystem 的查询条件改成"排除带 ControlledSignal 标记的路口"，
-    /// 这样被我们接管的路口原版就不管了。
-    /// </summary>
-    private void TryDetachVanillaSystem()
-    {
+        // 顺序说明：车道模块要禁用原版 LaneSystem 并插入替代实现，
+        // 信号模块只改查询条件，两者无依赖关系，但先车道后信号更贴近原作者的加载假设。
         try
         {
-            var vanilla = world.GetOrCreateSystemManaged<Game.Simulation.TrafficLightSystem>();
-
-            var none = new NativeList<ComponentType>(1, Allocator.Temp);
-            none.Add(ComponentType.ReadOnly<Components.ControlledSignal>());
-
-            takeoverAvailable = Utils.EntityQueryUtils.TryUpdateEntityQuery(vanilla, kVanillaQueryField, none);
-            none.Dispose();
-
-            if (takeoverAvailable)
-            {
-                log.Info($"已改写原版 TrafficLightSystem.{kVanillaQueryField}，接管通道就绪。");
-            }
-            else
-            {
-                log.Warn($"⚠ 在 Game.Simulation.TrafficLightSystem 上找不到字段 {kVanillaQueryField}。");
-                log.Warn("⚠ 这说明游戏更新后字段改名了。接管功能已禁用（否则会和原版抢同一份数据）。");
-                log.Warn("⚠ 请把这几行日志发回，需要重新确认字段名。");
-            }
+            m_LaneModule = new Traffic.Mod();
+            m_LaneModule.OnLoad(updateSystem, this);
         }
         catch (System.Exception e)
         {
-            takeoverAvailable = false;
-            log.Warn($"⚠ 改写原版查询时抛异常，接管功能已禁用：{e}");
+            log.Error($"⚠ 车道模块加载失败，车道连接与优先级功能不可用：{e}");
+            log.Error("⚠ 这通常意味着游戏更新后 LaneSystem 结构变了，需要重新核对 TrafficLaneSystem。");
         }
+
+        try
+        {
+            m_SignalModule = new C2VM.TrafficLightsEnhancement.Mod();
+            m_SignalModule.OnLoad(updateSystem, this);
+        }
+        catch (System.Exception e)
+        {
+            log.Error($"⚠ 信号模块加载失败，自定义相位与配时不可用：{e}");
+            log.Error("⚠ 若日志里有「找不到字段 m_TrafficLightQuery」，说明游戏更新后字段改名了。");
+        }
+
+        log.Info("========== Urban Brain 加载完成 ==========");
     }
 
     public void OnDispose()
     {
         log.Info("Urban Brain 卸载");
-        if (setting != null)
-        {
-            setting.UnregisterInOptionsUI();
-            setting = null;
-        }
+        m_SignalModule?.OnDispose();
+        m_LaneModule?.OnDispose();
+        m_SignalModule = null;
+        m_LaneModule = null;
     }
 }

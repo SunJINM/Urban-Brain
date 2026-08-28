@@ -9,7 +9,7 @@
 
         <AssemblyName>UrbanBrain</AssemblyName>
         <RootNamespace>UrbanBrain</RootNamespace>
-        <Version>0.1.0</Version>
+        <Version>0.2.0</Version>
 
         <PublishConfigurationPath>Properties\PublishConfiguration.xml</PublishConfigurationPath>
     </PropertyGroup>
@@ -19,33 +19,76 @@
     <Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.props" />
     <Import Project="$([System.Environment]::GetEnvironmentVariable('CSII_TOOLPATH', 'EnvironmentVariableTarget.User'))\Mod.targets" Condition="'$(DisablePostProcessors)' != 'true'" />
 
+    <!--
+        游戏程序集引用。这是 Traffic 与 TLE 两个模块所需引用的并集，
+        少一个就会报"找不到类型或命名空间"。
+        Private=false 表示不把游戏 DLL 拷贝到输出目录（那是 PDX/CO 的私有文件）。
+    -->
     <ItemGroup>
         <Reference Include="Game"><Private>false</Private></Reference>
-        <Reference Include="Colossal.Core"><Private>false</Private></Reference>
+        <Reference Include="cohtml.Net"><Private>false</Private></Reference>
+        <Reference Include="mscorlib"><Private>false</Private></Reference>
+        <Reference Include="Colossal.AssetPipeline"><Private>false</Private></Reference>
         <Reference Include="Colossal.Collections"><Private>false</Private></Reference>
-        <Reference Include="Colossal.Logging"><Private>false</Private></Reference>
-        <Reference Include="Colossal.Mathematics"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Core"><Private>false</Private></Reference>
         <Reference Include="Colossal.IO.AssetDatabase"><Private>false</Private></Reference>
         <Reference Include="Colossal.Localization"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Logging"><Private>false</Private></Reference>
+        <Reference Include="Colossal.Mathematics"><Private>false</Private></Reference>
+        <Reference Include="Colossal.PSI.Common"><Private>false</Private></Reference>
         <Reference Include="Colossal.UI"><Private>false</Private></Reference>
         <Reference Include="Colossal.UI.Binding"><Private>false</Private></Reference>
         <Reference Include="Newtonsoft.Json"><Private>false</Private></Reference>
-        <Reference Include="Unity.Entities"><Private>false</Private></Reference>
-        <Reference Include="Unity.Collections"><Private>false</Private></Reference>
-        <Reference Include="Unity.Mathematics"><Private>false</Private></Reference>
         <Reference Include="Unity.Burst"><Private>false</Private></Reference>
+        <Reference Include="Unity.Collections"><Private>false</Private></Reference>
+        <Reference Include="Unity.Entities"><Private>false</Private></Reference>
+        <Reference Include="Unity.InputSystem"><Private>false</Private></Reference>
+        <Reference Include="Unity.Mathematics"><Private>false</Private></Reference>
+        <Reference Include="Unity.RenderPipelines.Core.Runtime"><Private>false</Private></Reference>
         <Reference Include="UnityEngine.CoreModule"><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.AudioModule"><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.IMGUIModule"><Private>false</Private></Reference>
+        <Reference Include="UnityEngine.ImageConversionModule"><Private>false</Private></Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Update="System"><Private>false</Private></Reference>
+        <Reference Update="System.Core"><Private>false</Private></Reference>
+        <Reference Update="System.Data"><Private>false</Private></Reference>
     </ItemGroup>
 
     <!--
-        UI 前端构建默认关闭。
+        信号模块（TLE）的翻译与图标是嵌入资源，代码里按固定名字查找：
+            "C2VM.TrafficLightsEnhancement.Resources.Localisations.<locale>.json"
+        并入本项目后默认资源名会变成 "UrbanBrain.TLE.Resources...."，导致查不到。
+        这里用 LogicalName 把资源名固定回原样，从而不必改动模块内部代码。
+    -->
+    <ItemGroup>
+        <EmbeddedResource Include="TLE\Resources\Localisations\*.json">
+            <LogicalName>C2VM.TrafficLightsEnhancement.Resources.Localisations.%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="TLE\Resources\Textures\Icons\*.png">
+            <LogicalName>C2VM.TrafficLightsEnhancement.Resources.Textures.Icons.%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
 
-        C# 侧还没在真实游戏里验证过，npm 构建一旦失败会让整个编译失败，
-        连带 C# 的验证也做不成。等 C# 跑通了再打开：
+    <!--
+        车道模块（Traffic）的翻译不是嵌入资源，而是运行时从
+        「模组 dll 所在目录\Localization\」读取 json 文件，
+        所以要把它们复制到输出目录的该子目录下。
+        TranslationSource.json 是翻译工作用的模板，不需要随模组发布。
+    -->
+    <ItemGroup>
+        <None Include="Traffic\Localization\*.json" Exclude="Traffic\Localization\TranslationSource.json">
+            <Link>Localization\%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 
-            .\scripts\build.ps1 -WithUI
-
-        或者直接 dotnet build src\UrbanBrain.csproj -c Release -p:BuildUI=true
+    <!--
+        UI 前端构建默认关闭 —— npm 构建失败会让整个编译失败，
+        连带 C# 的验证也做不成。C# 跑通后再打开：
+            dotnet build src\UrbanBrain.csproj -c Release -p:BuildUI=true
     -->
     <Target Name="BuildUrbanBrainUI" BeforeTargets="Build" Condition="'$(BuildUI)' == 'true'">
         <Exec Command="npm install --prefer-offline --no-audit" WorkingDirectory="..\ui\" />
