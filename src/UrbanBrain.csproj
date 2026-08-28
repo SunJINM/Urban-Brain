@@ -93,7 +93,14 @@
     <Target Name="BuildUrbanBrainUI" BeforeTargets="Build" Condition="'$(BuildUI)' == 'true'">
         <Exec Command="npm install --prefer-offline --no-audit" WorkingDirectory="..\ui\" />
         <Exec Command="npm run build" WorkingDirectory="..\ui\" />
-        <Copy SourceFiles="..\ui\dist\UrbanBrain.mjs" DestinationFolder="$(OutDir)\" />
+        <!-- 产物不止 .mjs：还有抽出来的 CSS 与 traffic-images 下的图标，
+             少复制任何一样都会让界面缺样式或缺图。 -->
+        <ItemGroup>
+            <UIDistFiles Include="..\ui\dist\**\*.*" />
+        </ItemGroup>
+        <Copy SourceFiles="@(UIDistFiles)"
+              DestinationFolder="$(OutDir)\%(RecursiveDir)"
+              SkipUnchangedFiles="true" />
     </Target>
 
 </Project>

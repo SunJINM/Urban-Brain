@@ -6,15 +6,30 @@
     "moduleResolution": "Node",
     "isolatedModules": true,
     "strict": true,
+    "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "src",
     "skipLibCheck": true,
-    "typeRoots": ["./types", "./node_modules/@types"],
+    "typeRoots": ["./types"],
     "resolveJsonModule": true,
     "paths": {
-      "@/*": ["./*"],
-      "mod.json": ["../mod.json"]
+      "mod.json": ["../mod.json"],
+      "@/*": ["tle/*"],
+      "types": ["traffic/types"],
+      "types/*": ["traffic/types/*"],
+      "modUI": ["traffic/modUI"],
+      "modUI/*": ["traffic/modUI/*"],
+      "bindings": ["traffic/bindings"],
+      "bindings/*": ["traffic/bindings/*"],
+      "debugUi": ["traffic/debugUi"],
+      "debugUi/*": ["traffic/debugUi/*"],
+      "components": ["traffic/components"],
+      "components/*": ["traffic/components/*"],
+      "helpers": ["traffic/helpers"],
+      "helpers/*": ["traffic/helpers/*"],
+      "images/*": ["traffic/images/*"]
     }
-  }
+  },
+  "include": ["src/**/*", "types/**/*"]
 }
