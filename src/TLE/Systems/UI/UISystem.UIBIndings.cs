@@ -48,7 +48,6 @@ public partial class UISystem : UISystemBase
         AddBinding(new CallBinding<string, string>("C2VM.TLE", "CallMainPanelUpdateValue", CallMainPanelUpdateValue));
         AddBinding(new CallBinding<string, string>("C2VM.TLE", "CallMainPanelUpdatePosition", CallMainPanelUpdatePosition));
         AddBinding(new CallBinding<string, string>("C2VM.TLE", "CallMainPanelSave", CallMainPanelSave));
-        AddBinding(new CallBinding<string, string>("C2VM.TLE", "CallLaneDirectionToolReset", CallLaneDirectionToolReset));
 
         AddBinding(new CallBinding<string, string>("C2VM.TLE", "CallSetMainPanelState", CallSetMainPanelState));
         AddBinding(new CallBinding<string, string>("C2VM.TLE", "CallAddCustomPhase", CallAddCustomPhase));
@@ -315,12 +314,6 @@ public partial class UISystem : UISystemBase
         return "";
     }
 
-    protected string CallLaneDirectionToolReset(string input)
-    {
-        // 原 TLE 用 CommonLibraries 的 CustomLaneDirection 控制车道转向，
-        // 本项目改用 Traffic 的车道连接器实现同类功能，此入口保留空实现以兼容前端绑定。
-        return "";
-    }
 
     protected string CallSetMainPanelState(string input)
     {

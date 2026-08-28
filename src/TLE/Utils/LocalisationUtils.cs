@@ -106,7 +106,7 @@ public class LocalisationUtils
         {
             return;
         }
-        dictionary.Add(Mod.m_Settings.GetSettingsLocaleID(), "Traffic Lights Enhancement");
+        dictionary.Add(Mod.m_Settings.GetSettingsLocaleID(), "城市大脑 · 信号配时");
         dictionary.Add(Mod.m_Settings.GetOptionTabLocaleID(Settings.kTabGeneral), this.GetString("General"));
         dictionary.Add(Mod.m_Settings.GetOptionTabLocaleID(Settings.kTabKeyBindings), this.GetString("KeyBindings"));
         dictionary.Add(Mod.m_Settings.GetOptionGroupLocaleID(Settings.kGroupGeneral), this.GetString("General"));
@@ -122,7 +122,7 @@ public class LocalisationUtils
         dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_DefaultExclusivePedestrian"), this.GetString("DefaultExclusivePedestrianLabel"));
         dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_ForceNodeUpdate"), this.GetString("ForceAllNodesUpdateLabel"));
         dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_ReleaseChannel"), this.GetString("ReleaseChannel"));
-        dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_TleVersion"), Mod.m_Id);
+        dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_TleVersion"), "信号模块版本");
         dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_SuppressCanaryWarning"), this.GetString("SuppressCanaryWarningLabel"));
         dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_MainPanelToggleKeyboardBinding"), this.GetString("MainPanelToggleKeyboardBindingLabel"));
         dictionary.Add(Mod.m_Settings.GetOptionLabelLocaleID("m_ResetBindings"), this.GetString("ResetBindingsLabel"));
